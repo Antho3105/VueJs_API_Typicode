@@ -23,9 +23,17 @@
             <hr>
 
             <div id="app">
-                <information :data="data"></information>
+                <information :users="users" v-on:tasks-request="showtasks" v-on:albums-request="showalbums"
+                    v-on:articles-request="showarticles">
+                </information>
+                <section>
+                    <tasklist :task="task" :currentuser="currentUser"></tasklist>
+                    <albumlist :album="album" :currentuser="currentUser"></albumlist>
+                    <articlelist :article="article" :currentuser="currentUser"></articlelist>
+                </section>
+
             </div>
-            <hr>
+
         </section>
 
 
