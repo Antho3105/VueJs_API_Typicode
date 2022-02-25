@@ -21,11 +21,12 @@ let information = {
                 </ul>
                 <p>Adresse : {{users[selectedUserIndex].address.street}}, {{users[selectedUserIndex].address.suite}} {{users[selectedUserIndex].address.city}} {{users[selectedUserIndex].address.zipcode}}</p>
                 <p>Entreprise : {{users[selectedUserIndex].company.name}}</p>
-                <hr>
+
                 <button @click="tasksRequest()">Voir les taches</button> 
                 <button @click="albumsRequest()">Voir les albums</button>
                  <button @click="articlesRequest()">Voir les articles</button>
             </div>
+            <hr>
             
         </div>
 
@@ -72,10 +73,13 @@ let tasklist = {
     <section  v-if="task">
         <div>Taches de {{currentuser.name}} :
         </div>
+        <button @click="completedTaskDelete()">
+        Supprimer les taches terminées
+        </button>
         <ul>
             <li v-for="(task, index) of tasklist" :value="task.id" :style="{ color: taskColor(task.completed)}">
                 {{task.title}} 
-                <span @click="sendDeleteOrder(task.id)" class="suppr">
+                <span @click="taskDelete(task.id)" class="suppr">
                 <strong>Supprimer</strong>
                 </span>
             </li>
@@ -85,10 +89,14 @@ let tasklist = {
     props: ['task', 'currentuser', 'tasklist'],
     methods: {
         // envoi requete de suppression d'une tache
-        sendDeleteOrder: function (taskId) {
-            //console.log(taskId)
+        taskDelete: function (taskId) {
             this.$emit('task-delete', taskId);
         },
+        // envoi de la requete de suppression des taches terminées
+        completedTaskDelete: function () {
+            this.$emit('completed-task-delete');
+        },
+        // mise en forme conditionnelles de taches
         taskColor: function (completed) {
             return (completed) ? 'green' : 'red';
         }
@@ -129,7 +137,6 @@ let albumlist = {
             this.albumId = albumId;
             this.albumTitle = albumTitle;
             this.$emit('show-pictures', albumId);
-            //console.log(albumId);
         },
     },
 };
@@ -165,7 +172,6 @@ let postlist = {
     methods: {
         // envoi de la requete de'affichage d'un article
         showSinglePost: function (postId) {
-            //console.log('ok')
             this.$emit('show-post', postId);
         },
     },
@@ -205,7 +211,6 @@ let vm = new Vue({
     methods: {
         // Affichage des taches de l'utilisateur selectionné
         showTasks: function (user) {
-            //console.log('Request tasks from user ' + userId);
             this.clearData();
             this.currentUser = user;
             this.task = true;
@@ -217,7 +222,6 @@ let vm = new Vue({
         },
         // Affichage des albums de l'utilisateur selectionné
         showAlbums: function (user) {
-            //console.log('Request albums from user ' + userId)
             this.clearData()
             this.currentUser = user;
             this.task = false;
@@ -230,14 +234,12 @@ let vm = new Vue({
         // recuperation des photo d'un album defini
         showPictures: function (albumId) {
             this.photos = [];
-            //console.log('ok' + albumId);
             fetch(`https://jsonplaceholder.typicode.com/photos?albumId=${albumId}`)
                 .then((response) => response.json())
                 .then((json) => this.photos = json);
         },
         // Affichage des articles de l'utilisateur selectionné
         showPosts: function (user) {
-            //console.log('Request articles from user ' + userId)
             this.clearData()
             this.currentUser = user;
             this.task = false;
@@ -262,10 +264,13 @@ let vm = new Vue({
         taskDelete: function (taskId) {
             this.taskList.splice(this.taskList.findIndex(task => task.id == taskId), 1)
         },
+        // suppression des taches terminées
+        completedTaskDelete: function () {
+            this.taskList = this.taskList.filter(task => task.completed == true);
+        },
 
         // suppression des data au changement d'utililsateur ou de mode d'affichage
         clearData: function () {
-            //console.log('data cleared')
             this.taskList = [];
             this.albumList = [];
             this.postList = [];
