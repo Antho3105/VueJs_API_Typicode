@@ -23,8 +23,8 @@
             <hr>
 
             <div id="app">
-                <information :users="users" v-on:tasks-request="showtasks" v-on:albums-request="showalbums"
-                    v-on:articles-request="showarticles">
+                <information :users="users" v-on:tasks-request="showTasks" v-on:albums-request="showAlbums"
+                    v-on:articles-request="showPosts">
                 </information>
                 <section>
                     <tasklist :task="task" :tasklist="taskList" :currentuser="currentUser"
@@ -33,17 +33,13 @@
                     <albumlist :album="album" :albumlist="albumList" :photos="photos" :currentuser="currentUser"
                         v-on:show-pictures="showPictures">
                     </albumlist>
-                    <articlelist :article="article" :currentuser="currentUser">
-                    </articlelist>
+                    <postlist :article="article" :postlist="postList" :currentuser="currentUser" :post="post"
+                        :comments="comments" v-on:show-post="showSinglePost">
+                    </postlist>
                 </section>
-                <a href=""></a>
             </div>
-
         </section>
-
-
     </main>
-
 </body>
 
 <script async src="js/app.js"></script>

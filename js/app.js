@@ -111,7 +111,6 @@ let albumlist = {
         </div>
     </section>
     `,
-
     data: function () {
         return {
             albumId: -1,
@@ -119,8 +118,6 @@ let albumlist = {
         };
 
     },
-
-
     props: ['album', 'albumlist', 'photos', 'currentuser'],
     methods: {
         showPictures: function (albumId, albumTitle) {
@@ -132,12 +129,33 @@ let albumlist = {
     },
 };
 
-let articlelist = {
+let postlist = {
     template: `
-    <div v-if="article">Article of {{currentuser.name}}</div>
+    <section v-if="article">
+        <div>Liste des articles de {{currentuser.name}}</div>
+        <ul>
+            <li v-for="(post, index) of postlist" :value="post.id">{{post.title}} 
+                <span @click="showSinglePost(post.id)" class="suppr">
+                    <strong>Voir l'article</strong>
+                </span>
+            </li>
+        </ul>
 
+        <article v-if="post">
+            <h3>Article : {{post.title}}</h3>
+            <p>{{post.body}}</p>
+        </article>
+
+
+        </section>
     `,
-    props: ['article', 'currentuser'],
+    props: ['article', 'postlist', 'post', 'currentuser', 'comments'],
+    methods: {
+        showSinglePost: function (postId) {
+            console.log('ok')
+            this.$emit('show-post', postId);
+        },
+    },
 };
 
 let vm = new Vue({
@@ -150,9 +168,10 @@ let vm = new Vue({
         article: false,
         taskList: [],
         albumList: [],
-        postList: [],
         photos: [],
-
+        postList: [],
+        post: [],
+        comments: []
     },
     created: function () {
         fetch('https://jsonplaceholder.typicode.com/users')
@@ -167,7 +186,7 @@ let vm = new Vue({
     },
     methods: {
         // Affichage des taches de l'utilisateur selectionné
-        showtasks: function (userId) {
+        showTasks: function (userId) {
             //console.log('Request tasks from user ' + userId);
             this.clearData()
             this.currentUser = this.users[this.users.findIndex(user => user.id == userId)]
@@ -179,7 +198,7 @@ let vm = new Vue({
                 .then((json) => this.taskList = json);
         },
         // Affichage des albums de l'utilisateur selectionné
-        showalbums: function (userId) {
+        showAlbums: function (userId) {
             console.log('Request albums from user ' + userId)
             this.clearData()
             this.currentUser = this.users[this.users.findIndex(user => user.id == userId)]
@@ -190,8 +209,16 @@ let vm = new Vue({
                 .then((response) => response.json())
                 .then((json) => this.albumList = json);
         },
+        // recuperation des photo d'un album defini
+        showPictures: function (albumId) {
+            this.photos = [];
+            console.log('ok' + albumId);
+            fetch(`https://jsonplaceholder.typicode.com/photos?albumId=${albumId}`)
+                .then((response) => response.json())
+                .then((json) => this.photos = json);
+        },
         // Affichage des articles de l'utilisateur selectionné
-        showarticles: function (userId) {
+        showPosts: function (userId) {
             console.log('Request articles from user ' + userId)
             this.clearData()
             this.currentUser = this.users[this.users.findIndex(user => user.id == userId)]
@@ -200,20 +227,23 @@ let vm = new Vue({
             this.article = true;
             fetch(`https://jsonplaceholder.typicode.com/posts?userId=${this.currentUser.id}`)
                 .then((response) => response.json())
-                .then((json) => console.log(json));
+                .then((json) => this.postList = json);
         },
+        // recuperation d'un post et de ses commentaires
+        showSinglePost: function (postId) {
+            this.post = [];
+            fetch(`https://jsonplaceholder.typicode.com/posts/${postId}`)
+                .then((response) => response.json())
+                .then((json) => this.post = json);
+            fetch(`https://jsonplaceholder.typicode.com/comments?postId=${postId}`)
+                .then((response) => response.json())
+                .then((json) => this.comments = json);
+        },
+        // suppresion d'une tache de la liste (en local)
         taskDelete: function (taskId) {
             this.taskList.splice(this.taskList.findIndex(task => task.id == taskId), 1)
         },
-        // recuperation des photo d'un album defini
-        showPictures: function (albumId) {
-            this.photos = [];
-            console.log('ok' + albumId);
-            fetch(`https://jsonplaceholder.typicode.com/photos?albumId=${albumId}`)
-                .then((response) => response.json())
-                .then((json) => this.photos = json);
 
-        },
         // suppression des data au changement d'utililsateur
         clearData: function () {
             console.log('data cleared')
@@ -221,13 +251,15 @@ let vm = new Vue({
             this.albumList = [];
             this.postList = [];
             this.photos = [];
+            this.post = [];
+            this.postList = [];
         }
     },
     components: {
         information,
         tasklist,
         albumlist,
-        articlelist,
+        postlist,
     }
 });
 
