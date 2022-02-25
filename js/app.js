@@ -22,7 +22,9 @@ let information = {
                 <p>Adresse : {{users[selectedUser].address.street}}, {{users[selectedUser].address.suite}} {{users[selectedUser].address.city}} {{users[selectedUser].address.zipcode}}</p>
                 <p>Entreprise : {{users[selectedUser].company.name}}</p>
                 <hr>
-                <button @click="tasksRequest()">Voir les taches</button> <button @click="albumsRequest()">Voir les albums</button> <button @click="articlesRequest()">Voir les articles</button>
+                <button @click="tasksRequest()">Voir les taches</button> 
+                <button @click="albumsRequest()">Voir les albums</button>
+                 <button @click="articlesRequest()">Voir les articles</button>
             </div>
             
         </div>
@@ -56,10 +58,28 @@ let information = {
 
 let tasklist = {
     template: `
-    <div v-if="task">Task of {{currentuser.name}}</div>
-
+    <section  v-if="task">
+    <div>Task of {{currentuser.name}}</div>
+        <ul>
+            <li v-for="(task, index) of tasklist" :value="task.id" :style="{ color: taskColor(task.completed)}">
+                {{task.title}} 
+                <span @click="sendDeleteOrder(index)" class="suppr">
+                <strong>Supprimer</strong>
+                </span>
+            </li>
+        </ul>
+    </section>
     `,
-    props: ['task', 'currentuser'],
+    props: ['task', 'currentuser', 'tasklist'],
+    methods: {
+        sendDeleteOrder: function (taskId) {
+            //console.log(taskId)
+            this.$emit('task-delete', taskId);
+        },
+        taskColor: function (completed) {
+            return (completed) ? 'green' : 'red';
+        }
+    }
 };
 
 let albumlist = {
@@ -79,14 +99,15 @@ let articlelist = {
 };
 
 let vm = new Vue({
-
     el: '#app',
     data: {
         users: [],
+        currentUser: [],
         task: false,
         album: false,
         article: false,
-        currentUser: [],
+        taskList: [],
+
     },
     created: function () {
         fetch('https://jsonplaceholder.typicode.com/users')
@@ -108,7 +129,7 @@ let vm = new Vue({
             this.article = false;
             fetch(`https://jsonplaceholder.typicode.com/todos?userId=${this.currentUser.id}`)
                 .then((response) => response.json())
-                .then((json) => console.log(json));
+                .then((json) => this.taskList = json);
         },
         showalbums: function (user) {
             console.log('Request albums from user ' + user)
@@ -130,6 +151,10 @@ let vm = new Vue({
                 .then((response) => response.json())
                 .then((json) => console.log(json));
         },
+        taskDelete: function (index) {
+            //console.log('requette de suppression task a l index ' + index)
+            this.taskList.splice(index, 1)
+        }
     },
     components: {
         information,
