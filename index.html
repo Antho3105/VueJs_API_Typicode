@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Test JavaScript</title>
+    <title>Vue.js API Typicode</title>
     <link rel="stylesheet" href="css/normalize.css" />
     <link rel="stylesheet" href="css/style.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,8 +27,8 @@
                     v-on:articles-request="showPosts">
                 </information>
                 <section>
-                    <tasklist :task="task" :tasklist="taskList" :currentuser="currentUser" v-on:task-delete="taskDelete"
-                        v-on:completed-task-delete="completedTaskDelete">
+                    <tasklist :task="task" :tasklist="taskList" :currentuser="currentUser"
+                        v-on:task-delete="taskDelete">
                     </tasklist>
                     <albumlist :album="album" :albumlist="albumList" :photos="photos" :currentuser="currentUser"
                         v-on:show-pictures="showPictures">
@@ -40,7 +40,6 @@
             </div>
 
         </section>
-
 
     </main>
 </body>

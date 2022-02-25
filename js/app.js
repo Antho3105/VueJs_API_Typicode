@@ -73,11 +73,16 @@ let tasklist = {
     <section  v-if="task">
         <div>Taches de {{currentuser.name}} :
         </div>
-        <button @click="completedTaskDelete()">
-        Supprimer les taches terminées
+        <button v-if="displayAll" @click="displayTask()">
+        Masquer les tâches terminées
         </button>
+        <button v-else @click="displayTask()">
+        Afficher toutes les tâches
+        </button>
+        <input type="text" placeholder="ajouter une tâche" v-model="newTask" @keypress.enter="addTask()">
         <ul>
-            <li v-for="(task, index) of tasklist" :value="task.id" :style="{ color: taskColor(task.completed)}">
+            <li v-for="(task, index) of tasklist" :classname="task.id" :style="{ color: taskColor(task.completed), display: taskDisplay(task.completed)}">
+            <input type="checkbox" id="checkbox" v-model="task.completed" v-bind:id="task.id">
                 {{task.title}} 
                 <span @click="taskDelete(task.id)" class="suppr">
                 <strong>Supprimer</strong>
@@ -86,19 +91,39 @@ let tasklist = {
         </ul>
     </section>
     `,
+    data: function () {
+        return {
+            displayAll: true,
+            newTask: '',
+        }
+    },
     props: ['task', 'currentuser', 'tasklist'],
     methods: {
         // envoi requete de suppression d'une tache
         taskDelete: function (taskId) {
             this.$emit('task-delete', taskId);
         },
-        // envoi de la requete de suppression des taches terminées
-        completedTaskDelete: function () {
-            this.$emit('completed-task-delete');
+        displayTask: function () {
+            this.displayAll = !this.displayAll;
+        },
+        taskDisplay: function (completed) {
+            if (!this.displayAll && completed) return 'none';
+            else return 'block';
         },
         // mise en forme conditionnelles de taches
         taskColor: function (completed) {
             return (completed) ? 'green' : 'red';
+        },
+        // ajout nouvelle tâche
+        addTask: function () {
+            let newId = Math.max(...this.tasklist.map(elem => elem.id)) + 1;
+            this.tasklist.push({
+                completed: false,
+                id: newId,
+                title: this.newTask,
+                userId: this.currentuser.id
+            });
+            this.newTask = '';
         }
     }
 };
@@ -118,7 +143,7 @@ let albumlist = {
         <p v-if="photos.length >  0">Photos de l'album "{{albumTitle}}"</p>
         <div class="flex">
             <figure v-for="photo in photos" class="image">
-                <a :href="photo.url" target="_blank"><img :src="photo.thumbnailUrl" alt="" className="" /></a>
+                <a :href="photo.url" target="_blank"><img :src="photo.thumbnailUrl" :title="photo.title" alt="image"/></a>
                 <figcaption>{{photo.title}}</figcaption>
             </figure>
         </div>
@@ -231,7 +256,7 @@ let vm = new Vue({
                 .then((response) => response.json())
                 .then((json) => this.albumList = json);
         },
-        // recuperation des photo d'un album defini
+        // recuperation des photos d'un album defini
         showPictures: function (albumId) {
             this.photos = [];
             fetch(`https://jsonplaceholder.typicode.com/photos?albumId=${albumId}`)
@@ -264,11 +289,6 @@ let vm = new Vue({
         taskDelete: function (taskId) {
             this.taskList.splice(this.taskList.findIndex(task => task.id == taskId), 1)
         },
-        // suppression des taches terminées
-        completedTaskDelete: function () {
-            this.taskList = this.taskList.filter(task => task.completed == true);
-        },
-
         // suppression des data au changement d'utililsateur ou de mode d'affichage
         clearData: function () {
             this.taskList = [];
