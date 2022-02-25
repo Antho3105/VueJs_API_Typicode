@@ -5,22 +5,22 @@ let information = {
             <h1>Liste utilisateurs</h1>
             <p> Il y a {{this.users.length}} utilisateurs dans l'application</p>
 
-            <select v-model="selectedUser" name="" id="">
+            <select v-model="selectedUserId" name="" id="">
                 <option value="-1" selected>Selectionnez un utilisateur</option>
-                <option v-for="(user, index) of users" :value="index">{{user.name}}</option>
+                <option v-for="(user of users" :value="user.id">{{user.name}}</option>
             </select>
         </div>
         <div id="userinfo">
-            <div v-if="selectedUser != -1">
-                <h2>{{users[selectedUser].name}} ({{users[selectedUser].username}})</h2>
-                <p>id n°{{users[selectedUser].id}}</p>
+            <div v-if="selectedUserIndex != -1">
+                <h2>{{users[selectedUserIndex].name}} ({{users[selectedUserIndex].username}})</h2>
+                <p>id n°{{users[selectedUserIndex].id}}</p>
                 <ul>
-                    <li>email : {{users[selectedUser].email}}</li>
-                    <li>tel : {{users[selectedUser].phone}}</li>
-                    <li>web : {{users[selectedUser].website}}</li>
+                    <li>email : {{users[selectedUserIndex].email}}</li>
+                    <li>tel : {{users[selectedUserIndex].phone}}</li>
+                    <li>web : {{users[selectedUserIndex].website}}</li>
                 </ul>
-                <p>Adresse : {{users[selectedUser].address.street}}, {{users[selectedUser].address.suite}} {{users[selectedUser].address.city}} {{users[selectedUser].address.zipcode}}</p>
-                <p>Entreprise : {{users[selectedUser].company.name}}</p>
+                <p>Adresse : {{users[selectedUserIndex].address.street}}, {{users[selectedUserIndex].address.suite}} {{users[selectedUserIndex].address.city}} {{users[selectedUserIndex].address.zipcode}}</p>
+                <p>Entreprise : {{users[selectedUserIndex].company.name}}</p>
                 <hr>
                 <button @click="tasksRequest()">Voir les taches</button> 
                 <button @click="albumsRequest()">Voir les albums</button>
@@ -34,23 +34,30 @@ let information = {
     `,
     data: function () {
         return {
-            selectedUser: -1,
+            // ID de l'utilisateur séléctionné dans la boite de choix
+            selectedUserId: -1,
         };
 
     },
     props: ['users'],
     computed: {
-
+        selectedUserIndex: function () {
+            // calcul de l'index de l'utilisasteur dans la liste des utilisateurs
+            return this.users.findIndex(user => user.id == this.selectedUserId)
+        }
     },
     methods: {
+        // envoi de larequette d'affichage des taches (vers le composant principal)
         tasksRequest: function () {
-            this.$emit('tasks-request', this.selectedUser);
+            this.$emit('tasks-request', this.selectedUserId);
         },
+        // envoi de la requette d'affichage des albums (vers le composant principal)
         albumsRequest: function () {
-            this.$emit('albums-request', this.selectedUser);
+            this.$emit('albums-request', this.selectedUserId);
         },
+        // envoi de la requette d'affichage des articles (vers le composant principal)
         articlesRequest: function () {
-            this.$emit('articles-request', this.selectedUser);
+            this.$emit('articles-request', this.selectedUserId);
         },
     },
 
@@ -59,11 +66,12 @@ let information = {
 let tasklist = {
     template: `
     <section  v-if="task">
-    <div>Task of {{currentuser.name}}</div>
+        <div>Task of {{currentuser.name}}
+        </div>
         <ul>
             <li v-for="(task, index) of tasklist" :value="task.id" :style="{ color: taskColor(task.completed)}">
                 {{task.title}} 
-                <span @click="sendDeleteOrder(index)" class="suppr">
+                <span @click="sendDeleteOrder(task.id)" class="suppr">
                 <strong>Supprimer</strong>
                 </span>
             </li>
@@ -84,10 +92,44 @@ let tasklist = {
 
 let albumlist = {
     template: `
-    <div v-if="album">Album of {{currentuser.name}}</div>
-
+    <section v-if="album">
+        <div>Liste des albums de {{currentuser.name}}</div>
+        <ul>
+        <li v-for="(album, index) of albumlist" :value="album.id">
+            {{album.title}} 
+            <span @click="showPictures(album.id, album.title)" class="suppr">
+            <strong>Voir les photos</strong>
+            </span>
+        </li>
+        </ul>
+        <p v-if="photos.length >  0">Photos de l'album "{{albumTitle}}"</p>
+        <div class="flex">
+            <div v-for="photo in photos" class="card">
+                <h4>{{photo.title}}</h4>
+                <a :href="photo.url" target="_blank"><img :src="photo.thumbnailUrl" alt="" className="" /></a>
+            </div>
+        </div>
+    </section>
     `,
-    props: ['album', 'currentuser'],
+
+    data: function () {
+        return {
+            albumId: -1,
+            albumTitle: '',
+        };
+
+    },
+
+
+    props: ['album', 'albumlist', 'photos', 'currentuser'],
+    methods: {
+        showPictures: function (albumId, albumTitle) {
+            this.albumId = albumId;
+            this.albumTitle = albumTitle;
+            this.$emit('show-pictures', albumId);
+            console.log(albumId);
+        },
+    },
 };
 
 let articlelist = {
@@ -107,6 +149,9 @@ let vm = new Vue({
         album: false,
         article: false,
         taskList: [],
+        albumList: [],
+        postList: [],
+        photos: [],
 
     },
     created: function () {
@@ -121,9 +166,11 @@ let vm = new Vue({
 
     },
     methods: {
-        showtasks: function (user) {
-            console.log('Request tasks from user ' + user);
-            this.currentUser = this.users[user]
+        // Affichage des taches de l'utilisateur selectionné
+        showtasks: function (userId) {
+            //console.log('Request tasks from user ' + userId);
+            this.clearData()
+            this.currentUser = this.users[this.users.findIndex(user => user.id == userId)]
             this.task = true;
             this.album = false;
             this.article = false;
@@ -131,19 +178,23 @@ let vm = new Vue({
                 .then((response) => response.json())
                 .then((json) => this.taskList = json);
         },
-        showalbums: function (user) {
-            console.log('Request albums from user ' + user)
-            this.currentUser = this.users[user]
+        // Affichage des albums de l'utilisateur selectionné
+        showalbums: function (userId) {
+            console.log('Request albums from user ' + userId)
+            this.clearData()
+            this.currentUser = this.users[this.users.findIndex(user => user.id == userId)]
             this.task = false;
             this.album = true;
             this.article = false;
             fetch(`https://jsonplaceholder.typicode.com/albums?userId=${this.currentUser.id}`)
                 .then((response) => response.json())
-                .then((json) => console.log(json));
+                .then((json) => this.albumList = json);
         },
-        showarticles: function (user) {
-            console.log('Request articles from user ' + user)
-            this.currentUser = this.users[user]
+        // Affichage des articles de l'utilisateur selectionné
+        showarticles: function (userId) {
+            console.log('Request articles from user ' + userId)
+            this.clearData()
+            this.currentUser = this.users[this.users.findIndex(user => user.id == userId)]
             this.task = false;
             this.album = false;
             this.article = true;
@@ -151,9 +202,25 @@ let vm = new Vue({
                 .then((response) => response.json())
                 .then((json) => console.log(json));
         },
-        taskDelete: function (index) {
-            //console.log('requette de suppression task a l index ' + index)
-            this.taskList.splice(index, 1)
+        taskDelete: function (taskId) {
+            this.taskList.splice(this.taskList.findIndex(task => task.id == taskId), 1)
+        },
+        // recuperation des photo d'un album defini
+        showPictures: function (albumId) {
+            this.photos = [];
+            console.log('ok' + albumId);
+            fetch(`https://jsonplaceholder.typicode.com/photos?albumId=${albumId}`)
+                .then((response) => response.json())
+                .then((json) => this.photos = json);
+
+        },
+        // suppression des data au changement d'utililsateur
+        clearData: function () {
+            console.log('data cleared')
+            this.taskList = [];
+            this.albumList = [];
+            this.postList = [];
+            this.photos = [];
         }
     },
     components: {

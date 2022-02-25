@@ -71,6 +71,13 @@ MAIN
   color: black;
 }
 
+.card {
+  text-align: center;
+  width: 250px;
+  height: 280px;
+  object-fit: cover;
+}
+
 
 
 /*----------------------------------------------------------------

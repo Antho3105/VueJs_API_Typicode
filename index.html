@@ -28,11 +28,15 @@
                 </information>
                 <section>
                     <tasklist :task="task" :tasklist="taskList" :currentuser="currentUser"
-                        v-on:task-delete="taskDelete"></tasklist>
-                    <albumlist :album="album" :currentuser="currentUser"></albumlist>
-                    <articlelist :article="article" :currentuser="currentUser"></articlelist>
+                        v-on:task-delete="taskDelete">
+                    </tasklist>
+                    <albumlist :album="album" :albumlist="albumList" :photos="photos" :currentuser="currentUser"
+                        v-on:show-pictures="showPictures">
+                    </albumlist>
+                    <articlelist :article="article" :currentuser="currentUser">
+                    </articlelist>
                 </section>
-
+                <a href=""></a>
             </div>
 
         </section>
