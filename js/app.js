@@ -42,22 +42,26 @@ let information = {
     props: ['users'],
     computed: {
         selectedUserIndex: function () {
-            // calcul de l'index de l'utilisasteur dans la liste des utilisateurs
+            // recuperation de l'index de l'utilisateur dans la liste des utilisateurs
             return this.users.findIndex(user => user.id == this.selectedUserId)
+        },
+        // stockage de l'utilisateur actuel (pour renvoi au root) 
+        currentUser: function () {
+            return this.users[this.selectedUserIndex]
         }
     },
     methods: {
-        // envoi de larequette d'affichage des taches (vers le composant principal)
+        // envoi de la requete d'affichage des taches (vers le composant principal)
         tasksRequest: function () {
-            this.$emit('tasks-request', this.selectedUserId);
+            this.$emit('tasks-request', this.currentUser);
         },
-        // envoi de la requette d'affichage des albums (vers le composant principal)
+        // envoi de la requete d'affichage des albums (vers le composant principal)
         albumsRequest: function () {
-            this.$emit('albums-request', this.selectedUserId);
+            this.$emit('albums-request', this.currentUser);
         },
-        // envoi de la requette d'affichage des articles (vers le composant principal)
+        // envoi de la requete d'affichage des articles (vers le composant principal)
         articlesRequest: function () {
-            this.$emit('articles-request', this.selectedUserId);
+            this.$emit('articles-request', this.currentUser);
         },
     },
 
@@ -66,7 +70,7 @@ let information = {
 let tasklist = {
     template: `
     <section  v-if="task">
-        <div>Task of {{currentuser.name}}
+        <div>Taches de {{currentuser.name}} :
         </div>
         <ul>
             <li v-for="(task, index) of tasklist" :value="task.id" :style="{ color: taskColor(task.completed)}">
@@ -80,6 +84,7 @@ let tasklist = {
     `,
     props: ['task', 'currentuser', 'tasklist'],
     methods: {
+        // envoi requete de suppression d'une tache
         sendDeleteOrder: function (taskId) {
             //console.log(taskId)
             this.$emit('task-delete', taskId);
@@ -95,7 +100,7 @@ let albumlist = {
     <section v-if="album">
         <div>Liste des albums de {{currentuser.name}}</div>
         <ul>
-        <li v-for="(album, index) of albumlist" :value="album.id">
+        <li v-for="(album, index) of albumlist">
             {{album.title}} 
             <span @click="showPictures(album.id, album.title)" class="suppr">
             <strong>Voir les photos</strong>
@@ -104,10 +109,10 @@ let albumlist = {
         </ul>
         <p v-if="photos.length >  0">Photos de l'album "{{albumTitle}}"</p>
         <div class="flex">
-            <div v-for="photo in photos" class="card">
-                <h4>{{photo.title}}</h4>
+            <figure v-for="photo in photos" class="image">
                 <a :href="photo.url" target="_blank"><img :src="photo.thumbnailUrl" alt="" className="" /></a>
-            </div>
+                <figcaption>{{photo.title}}</figcaption>
+            </figure>
         </div>
     </section>
     `,
@@ -116,55 +121,67 @@ let albumlist = {
             albumId: -1,
             albumTitle: '',
         };
-
     },
     props: ['album', 'albumlist', 'photos', 'currentuser'],
     methods: {
+        // envoi de la requete d'affichage des photos d'un album
         showPictures: function (albumId, albumTitle) {
             this.albumId = albumId;
             this.albumTitle = albumTitle;
             this.$emit('show-pictures', albumId);
-            console.log(albumId);
+            //console.log(albumId);
         },
     },
 };
 
 let postlist = {
     template: `
-    <section v-if="article">
+    <section v-if="article" class="posts">
         <div>Liste des articles de {{currentuser.name}}</div>
+
         <ul>
-            <li v-for="(post, index) of postlist" :value="post.id">{{post.title}} 
-                <span @click="showSinglePost(post.id)" class="suppr">
-                    <strong>Voir l'article</strong>
-                </span>
+            <li title="Lire l'article" v-for="(post, index) of postlist" @click="showSinglePost(post.id)">{{post.title}}
             </li>
         </ul>
 
-        <article v-if="post">
+        <article v-if="post.body">
             <h3>Article : {{post.title}}</h3>
             <p>{{post.body}}</p>
         </article>
 
-
+        <div v-if="comments">
+            <figure v-for="comment of comments" class="comment">
+                <blockquote>
+                    <p>"{{comment.body}}"</p>
+                    <figcaption>{{comment.name}}
+                        <cite>{{comment.email}}</cite>
+                    </figcaption>
+                </blockquote>
+            </figure>
+        </div>
         </section>
     `,
     props: ['article', 'postlist', 'post', 'currentuser', 'comments'],
     methods: {
+        // envoi de la requete de'affichage d'un article
         showSinglePost: function (postId) {
-            console.log('ok')
+            //console.log('ok')
             this.$emit('show-post', postId);
         },
     },
 };
 
+// composant principal
 let vm = new Vue({
     el: '#app',
     data: {
         users: [],
         currentUser: [],
+        // booleen de mode tache
         task: false,
+        // booleen de mode album
         album: false,
+        // booleen de mode article
         article: false,
         taskList: [],
         albumList: [],
@@ -174,6 +191,7 @@ let vm = new Vue({
         comments: []
     },
     created: function () {
+        // recuperation des infos des utilisateurs
         fetch('https://jsonplaceholder.typicode.com/users')
             .then(response => response.json())
             .then(json => this.users = json)
@@ -186,10 +204,10 @@ let vm = new Vue({
     },
     methods: {
         // Affichage des taches de l'utilisateur selectionné
-        showTasks: function (userId) {
+        showTasks: function (user) {
             //console.log('Request tasks from user ' + userId);
-            this.clearData()
-            this.currentUser = this.users[this.users.findIndex(user => user.id == userId)]
+            this.clearData();
+            this.currentUser = user;
             this.task = true;
             this.album = false;
             this.article = false;
@@ -198,10 +216,10 @@ let vm = new Vue({
                 .then((json) => this.taskList = json);
         },
         // Affichage des albums de l'utilisateur selectionné
-        showAlbums: function (userId) {
-            console.log('Request albums from user ' + userId)
+        showAlbums: function (user) {
+            //console.log('Request albums from user ' + userId)
             this.clearData()
-            this.currentUser = this.users[this.users.findIndex(user => user.id == userId)]
+            this.currentUser = user;
             this.task = false;
             this.album = true;
             this.article = false;
@@ -212,16 +230,16 @@ let vm = new Vue({
         // recuperation des photo d'un album defini
         showPictures: function (albumId) {
             this.photos = [];
-            console.log('ok' + albumId);
+            //console.log('ok' + albumId);
             fetch(`https://jsonplaceholder.typicode.com/photos?albumId=${albumId}`)
                 .then((response) => response.json())
                 .then((json) => this.photos = json);
         },
         // Affichage des articles de l'utilisateur selectionné
-        showPosts: function (userId) {
-            console.log('Request articles from user ' + userId)
+        showPosts: function (user) {
+            //console.log('Request articles from user ' + userId)
             this.clearData()
-            this.currentUser = this.users[this.users.findIndex(user => user.id == userId)]
+            this.currentUser = user;
             this.task = false;
             this.album = false;
             this.article = true;
@@ -232,6 +250,7 @@ let vm = new Vue({
         // recuperation d'un post et de ses commentaires
         showSinglePost: function (postId) {
             this.post = [];
+            this.comments = [];
             fetch(`https://jsonplaceholder.typicode.com/posts/${postId}`)
                 .then((response) => response.json())
                 .then((json) => this.post = json);
@@ -244,15 +263,16 @@ let vm = new Vue({
             this.taskList.splice(this.taskList.findIndex(task => task.id == taskId), 1)
         },
 
-        // suppression des data au changement d'utililsateur
+        // suppression des data au changement d'utililsateur ou de mode d'affichage
         clearData: function () {
-            console.log('data cleared')
+            //console.log('data cleared')
             this.taskList = [];
             this.albumList = [];
             this.postList = [];
             this.photos = [];
             this.post = [];
             this.postList = [];
+            this.comments = [];
         }
     },
     components: {
