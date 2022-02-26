@@ -24,7 +24,7 @@
 
             <div id="app">
                 <information :users="users" v-on:tasks-request="showTasks" v-on:albums-request="showAlbums"
-                    v-on:articles-request="showPosts">
+                    v-on:articles-request="showPosts" v-on:clear-request="clearData">
                 </information>
                 <section>
                     <tasklist :task="task" :tasklist="taskList" :currentuser="currentUser">

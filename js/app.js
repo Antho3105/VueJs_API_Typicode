@@ -5,31 +5,29 @@ let information = {
             <h1>Liste utilisateurs</h1>
             <p> Il y a {{this.users.length}} utilisateurs dans l'application</p>
 
-            <select v-model="selectedUserId" name="" id="">
+            <select v-model="selectedUserId" @change="updateUser">
                 <option value="-1" selected>Selectionnez un utilisateur</option>
                 <option v-for="(user of users" :value="user.id">{{user.name}}</option>
             </select>
         </div>
         <div id="userinfo">
-            <div v-if="selectedUserIndex != -1">
-                <h2>{{users[selectedUserIndex].name}} ({{users[selectedUserIndex].username}})</h2>
-                <p>id n°{{users[selectedUserIndex].id}}</p>
+            <div v-if="userSelected.id">
+                <h2>{{userSelected.name}} ({{userSelected.username}})</h2>
+                <p>id n°{{userSelected.id}}</p>
                 <ul>
-                    <li>email : {{users[selectedUserIndex].email}}</li>
-                    <li>tel : {{users[selectedUserIndex].phone}}</li>
-                    <li>web : {{users[selectedUserIndex].website}}</li>
+                    <li>email : {{userSelected.email}}</li>
+                    <li>tel : {{userSelected.phone}}</li>
+                    <li>web : {{userSelected.website}}</li>
                 </ul>
-                <p>Adresse : {{users[selectedUserIndex].address.street}}, {{users[selectedUserIndex].address.suite}} {{users[selectedUserIndex].address.city}} {{users[selectedUserIndex].address.zipcode}}</p>
-                <p>Entreprise : {{users[selectedUserIndex].company.name}}</p>
+                <p>Adresse : {{userSelected.address.street}}, {{userSelected.address.suite}} {{userSelected.address.city}} {{userSelected.address.zipcode}}</p>
+                <p>Entreprise : {{userSelected.company.name}}</p>
 
                 <button @click="tasksRequest()">Voir les taches</button> 
                 <button @click="albumsRequest()">Voir les albums</button>
                  <button @click="articlesRequest()">Voir les articles</button>
             </div>
             <hr>
-            
         </div>
-
     </section>
 
     `,
@@ -37,32 +35,33 @@ let information = {
         return {
             // ID de l'utilisateur séléctionné dans la boite de choix
             selectedUserId: -1,
+            userSelected: [],
         };
 
     },
     props: ['users'],
-    computed: {
-        selectedUserIndex: function () {
-            // recuperation de l'index de l'utilisateur dans la liste des utilisateurs
-            return this.users.findIndex(user => user.id == this.selectedUserId)
-        },
-        // stockage de l'utilisateur actuel (pour renvoi au root) 
-        currentUser: function () {
-            return this.users[this.selectedUserIndex]
-        }
-    },
     methods: {
+        updateUser: function () {
+            if (this.selectedUserId != -1) {
+                fetch(`https://jsonplaceholder.typicode.com/users/${this.selectedUserId}`)
+                    .then(response => response.json())
+                    .then(json => this.userSelected = json)
+            } else {
+                this.userSelected = []
+                this.$emit('clear-request')
+            };
+        },
         // envoi de la requete d'affichage des taches (vers le composant principal)
         tasksRequest: function () {
-            this.$emit('tasks-request', this.currentUser);
+            this.$emit('tasks-request', this.userSelected);
         },
         // envoi de la requete d'affichage des albums (vers le composant principal)
         albumsRequest: function () {
-            this.$emit('albums-request', this.currentUser);
+            this.$emit('albums-request', this.userSelected);
         },
         // envoi de la requete d'affichage des articles (vers le composant principal)
         articlesRequest: function () {
-            this.$emit('articles-request', this.currentUser);
+            this.$emit('articles-request', this.userSelected);
         },
     },
 
@@ -73,10 +72,10 @@ let tasklist = {
     <section  v-if="task">
         <div>Taches de {{currentuser.name}} :
         </div>
-        <button v-if="displayAll" @click="displayTask()">
+        <button v-if="displayAll" @click="displayAllTask()">
         Masquer les tâches terminées
         </button>
-        <button v-else @click="displayTask()">
+        <button v-else @click="displayAllTask()">
         Afficher toutes les tâches
         </button> 
         <input type="text" placeholder="ajouter une tâche" v-model="newTask" @keypress.enter="addTask()">
@@ -116,7 +115,7 @@ let tasklist = {
             this.tasklist.splice(this.tasklist.findIndex(task => task.id == taskId), 1)
             this.onDelete = !this.onDelete;
         },
-        displayTask: function () {
+        displayAllTask: function () {
             this.displayAll = !this.displayAll;
         },
         taskDisplay: function (completed) {
@@ -307,6 +306,10 @@ let vm = new Vue({
             this.post = [];
             this.postList = [];
             this.comments = [];
+            this.currentUser = [];
+            this.task = false;
+            this.album = false;
+            this.article = false;
         }
     },
     components: {
