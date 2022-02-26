@@ -78,15 +78,23 @@ let tasklist = {
         </button>
         <button v-else @click="displayTask()">
         Afficher toutes les tâches
-        </button>
+        </button> 
         <input type="text" placeholder="ajouter une tâche" v-model="newTask" @keypress.enter="addTask()">
+        <br>
+        <button v-if="!onDelete" @click="activateTaskDelete()">
+        Supprimer une tâche
+        </button>
+        <button v-else @click="activateTaskDelete()">
+        Annuler
+        </button>
+
         <ul>
-            <li v-for="(task, index) of tasklist" :classname="task.id" :style="{ color: taskColor(task.completed), display: taskDisplay(task.completed)}">
-            <input type="checkbox" id="checkbox" v-model="task.completed" v-bind:id="task.id">
-                {{task.title}} 
-                <span @click="taskDelete(task.id)" class="suppr">
-                <strong>Supprimer</strong>
-                </span>
+            <li v-for="(task, index) of tasklist" :classname="task.id" :style="taskDisplay(task.completed)">
+            <span v-if="onDelete" @click="taskDelete(task.id)" class="suppr">
+            Supprimer
+            </span>
+            <input v-if="!onDelete" type="checkbox" id="checkbox" v-model="task.completed" v-bind:id="task.id">
+                <span :style="taskStyle(task.completed)">{{task.title}}</span> 
             </li>
         </ul>
     </section>
@@ -95,24 +103,29 @@ let tasklist = {
         return {
             displayAll: true,
             newTask: '',
+            onDelete: false,
         }
     },
     props: ['task', 'currentuser', 'tasklist'],
     methods: {
-        // envoi requete de suppression d'une tache
+        activateTaskDelete: function () {
+            this.onDelete = !this.onDelete;
+        },
+        // suppression d'une tache
         taskDelete: function (taskId) {
-            this.$emit('task-delete', taskId);
+            this.tasklist.splice(this.tasklist.findIndex(task => task.id == taskId), 1)
+            this.onDelete = !this.onDelete;
         },
         displayTask: function () {
             this.displayAll = !this.displayAll;
         },
         taskDisplay: function (completed) {
-            if (!this.displayAll && completed) return 'none';
-            else return 'block';
+            if (!this.displayAll && completed) return 'display: none';
+            else return 'display: block';
         },
         // mise en forme conditionnelles de taches
-        taskColor: function (completed) {
-            return (completed) ? 'green' : 'red';
+        taskStyle: function (completed) {
+            return (completed) ? "color: green; textDecoration: line-through" : "color: red";
         },
         // ajout nouvelle tâche
         addTask: function () {
@@ -284,10 +297,6 @@ let vm = new Vue({
             fetch(`https://jsonplaceholder.typicode.com/comments?postId=${postId}`)
                 .then((response) => response.json())
                 .then((json) => this.comments = json);
-        },
-        // suppresion d'une tache de la liste (en local)
-        taskDelete: function (taskId) {
-            this.taskList.splice(this.taskList.findIndex(task => task.id == taskId), 1)
         },
         // suppression des data au changement d'utililsateur ou de mode d'affichage
         clearData: function () {

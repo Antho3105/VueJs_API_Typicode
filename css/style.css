@@ -69,6 +69,7 @@ MAIN
 .suppr {
   cursor: pointer;
   color: black;
+  font-weight: bold;
 }
 
 .image {

@@ -27,8 +27,7 @@
                     v-on:articles-request="showPosts">
                 </information>
                 <section>
-                    <tasklist :task="task" :tasklist="taskList" :currentuser="currentUser"
-                        v-on:task-delete="taskDelete">
+                    <tasklist :task="task" :tasklist="taskList" :currentuser="currentUser">
                     </tasklist>
                     <albumlist :album="album" :albumlist="albumList" :photos="photos" :currentuser="currentUser"
                         v-on:show-pictures="showPictures">
