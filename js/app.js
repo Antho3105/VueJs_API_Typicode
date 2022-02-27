@@ -30,7 +30,7 @@ let information = {
         </transition>
         </div>
 
-      </section>
+    </section>
 
     `,
     data: function () {
@@ -106,6 +106,14 @@ let tasklist = {
         }
     },
     props: ['task', 'currentuser', 'tasklist'],
+    watch: {
+        task: function () {
+            if (!this.task) {
+                this.displayAll = true;
+                this.onDelete = false;
+            }
+        }
+    },
     methods: {
         activateTaskDelete: function () {
             this.onDelete = !this.onDelete;
