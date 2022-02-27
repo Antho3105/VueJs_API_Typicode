@@ -20,22 +20,20 @@
             <h1>
                 App Typicode VueJs
             </h1>
-            <hr>
-
             <div id="app">
                 <information :users="users" v-on:tasks-request="showTasks" v-on:albums-request="showAlbums"
                     v-on:articles-request="showPosts" v-on:clear-request="clearData">
                 </information>
-                <section>
-                    <tasklist :task="task" :tasklist="taskList" :currentuser="currentUser">
-                    </tasklist>
-                    <albumlist :album="album" :albumlist="albumList" :photos="photos" :currentuser="currentUser"
-                        v-on:show-pictures="showPictures">
-                    </albumlist>
-                    <postlist :article="article" :postlist="postList" :currentuser="currentUser" :post="post"
-                        :comments="comments" v-on:show-post="showSinglePost">
-                    </postlist>
-                </section>
+
+                <tasklist :task="task" :tasklist="taskList" :currentuser="currentUser">
+                </tasklist>
+                <albumlist :album="album" :albumlist="albumList" :photos="photos" :currentuser="currentUser"
+                    v-on:show-pictures="showPictures">
+                </albumlist>
+                <postlist :article="article" :postlist="postList" :currentuser="currentUser" :post="post"
+                    :comments="comments" v-on:show-post="showSinglePost">
+                </postlist>
+
             </div>
 
         </section>

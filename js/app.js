@@ -1,6 +1,6 @@
 let information = {
     template: `
-    <section>
+    <section id="users">
         <div>
             <h1>Liste utilisateurs</h1>
             <p> Il y a {{this.users.length}} utilisateurs dans l'application</p>
@@ -11,6 +11,7 @@ let information = {
             </select>
         </div>
         <div id="userinfo">
+        <transition name="slide-fade">
             <div v-if="userSelected.id">
                 <h2>{{userSelected.name}} ({{userSelected.username}})</h2>
                 <p>id n°{{userSelected.id}}</p>
@@ -26,9 +27,10 @@ let information = {
                 <button @click="albumsRequest()">Voir les albums</button>
                  <button @click="articlesRequest()">Voir les articles</button>
             </div>
-            <hr>
+        </transition>
         </div>
-    </section>
+
+      </section>
 
     `,
     data: function () {
@@ -43,9 +45,11 @@ let information = {
     methods: {
         updateUser: function () {
             if (this.selectedUserId != -1) {
+                this.userSelected = []
                 fetch(`https://jsonplaceholder.typicode.com/users/${this.selectedUserId}`)
                     .then(response => response.json())
                     .then(json => this.userSelected = json)
+                this.$emit('clear-request')
             } else {
                 this.userSelected = []
                 this.$emit('clear-request')
@@ -69,34 +73,30 @@ let information = {
 
 let tasklist = {
     template: `
-    <section  v-if="task">
+    <transition name="slide-fade">
+    <section v-if="task" id="data-tasks">
         <div>Taches de {{currentuser.name}} :
         </div>
-        <button v-if="displayAll" @click="displayAllTask()">
-        Masquer les tâches terminées
+        <button v-if="displayAll" @click="displayAllTask()">Masquer les tâches terminées
         </button>
-        <button v-else @click="displayAllTask()">
-        Afficher toutes les tâches
+        <button v-else @click="displayAllTask()">Afficher toutes les tâches
         </button> 
         <input type="text" placeholder="ajouter une tâche" v-model="newTask" @keypress.enter="addTask()">
         <br>
-        <button v-if="!onDelete" @click="activateTaskDelete()">
-        Supprimer une tâche
+        <button v-if="!onDelete" @click="activateTaskDelete()">Supprimer une tâche
         </button>
-        <button v-else @click="activateTaskDelete()">
-        Annuler
+        <button v-else @click="activateTaskDelete()">Annuler
         </button>
-
+        
         <ul>
-            <li v-for="(task, index) of tasklist" :classname="task.id" :style="taskDisplay(task.completed)">
-            <span v-if="onDelete" @click="taskDelete(task.id)" class="suppr">
-            Supprimer
-            </span>
-            <input v-if="!onDelete" type="checkbox" id="checkbox" v-model="task.completed" v-bind:id="task.id">
+            <li v-for="task of tasklist" :classname="task.id" :style="taskDisplay(task.completed)">
+                <span v-if="onDelete" @click="taskDelete(task.id)" class="suppr">Supprimer</span>
+                <input type="checkbox" v-if="!onDelete" v-model="task.completed" v-bind:id="task.id">
                 <span :style="taskStyle(task.completed)">{{task.title}}</span> 
             </li>
         </ul>
     </section>
+    </transition>
     `,
     data: function () {
         return {
@@ -142,15 +142,17 @@ let tasklist = {
 
 let albumlist = {
     template: `
-    <section v-if="album">
+    <transition name="slide-fade">
+    <section v-if="album" id="data-albums">
         <div>Liste des albums de {{currentuser.name}}</div>
         <ul>
-        <li v-for="(album, index) of albumlist">
+        <li v-for="album of albumlist">
             {{album.title}} 
             <span @click="showPictures(album.id, album.title)" class="suppr">
             <strong>Voir les photos</strong>
             </span>
         </li>
+        
         </ul>
         <p v-if="photos.length >  0">Photos de l'album "{{albumTitle}}"</p>
         <div class="flex">
@@ -160,6 +162,7 @@ let albumlist = {
             </figure>
         </div>
     </section>
+    </transition>
     `,
     data: function () {
         return {
@@ -180,11 +183,12 @@ let albumlist = {
 
 let postlist = {
     template: `
-    <section v-if="article" class="posts">
+    <transition name="slide-fade">
+    <section v-if="article" class="posts" id="data-posts">
         <div>Liste des articles de {{currentuser.name}}</div>
 
         <ul>
-            <li title="Lire l'article" v-for="(post, index) of postlist" @click="showSinglePost(post.id)">{{post.title}}
+            <li title="Lire l'article" v-for="post of postlist" @click="showSinglePost(post.id)">{{post.title}}
             </li>
         </ul>
 
@@ -203,7 +207,8 @@ let postlist = {
                 </blockquote>
             </figure>
         </div>
-        </section>
+    </section>
+    </transition>
     `,
     props: ['article', 'postlist', 'post', 'currentuser', 'comments'],
     methods: {
