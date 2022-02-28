@@ -11,8 +11,8 @@ let information = {
             </select>
         </div>
         <div id="userinfo">
-        <transition name="slide-fade">
-            <div v-if="userSelected.id">
+        <transition name="appear-rotate">
+            <div v-if="userSelected.id" id="usercard">
                 <h2>{{userSelected.name}} ({{userSelected.username}})</h2>
                 <p>id n°{{userSelected.id}}</p>
                 <ul>
@@ -22,10 +22,11 @@ let information = {
                 </ul>
                 <p>Adresse : {{userSelected.address.street}}, {{userSelected.address.suite}} {{userSelected.address.city}} {{userSelected.address.zipcode}}</p>
                 <p>Entreprise : {{userSelected.company.name}}</p>
-
+                <div id="buttons" class="flex">
                 <button @click="tasksRequest()">Voir les taches</button> 
                 <button @click="albumsRequest()">Voir les albums</button>
                  <button @click="articlesRequest()">Voir les articles</button>
+                 </div>
             </div>
         </transition>
         </div>
@@ -73,9 +74,9 @@ let information = {
 
 let tasklist = {
     template: `
-    <transition name="slide-fade">
+    <transition name="appear-up">
     <section v-if="task" id="data-tasks">
-        <div>Taches de {{currentuser.name}} :
+        <div><strong>Taches de {{currentuser.name}} :</strong>
         </div>
         <button v-if="displayAll" @click="displayAllTask()">Masquer les tâches terminées
         </button>
@@ -88,9 +89,9 @@ let tasklist = {
         <button v-else @click="activateTaskDelete()">Annuler
         </button>
         
-        <ul>
+        <ul id="classlit">
             <li v-for="task of tasklist" :classname="task.id" :style="taskDisplay(task.completed)">
-                <span v-if="onDelete" @click="taskDelete(task.id)" class="suppr">Supprimer</span>
+                <input type="checkbox" v-if="onDelete" @click="taskDelete(task.id)">
                 <input type="checkbox" v-if="!onDelete" v-model="task.completed" v-bind:id="task.id">
                 <span :style="taskStyle(task.completed)">{{task.title}}</span> 
             </li>
@@ -120,8 +121,10 @@ let tasklist = {
         },
         // suppression d'une tache
         taskDelete: function (taskId) {
-            this.tasklist.splice(this.tasklist.findIndex(task => task.id == taskId), 1)
-            this.onDelete = !this.onDelete;
+            if (confirm('voulez vous supprimer la tache ' + taskId)) {
+                this.tasklist.splice(this.tasklist.findIndex(task => task.id == taskId), 1)
+                this.onDelete = !this.onDelete;
+            }
         },
         displayAllTask: function () {
             this.displayAll = !this.displayAll;
@@ -150,25 +153,26 @@ let tasklist = {
 
 let albumlist = {
     template: `
-    <transition name="slide-fade">
+    <transition name="appear-up">
     <section v-if="album" id="data-albums">
-        <div>Liste des albums de {{currentuser.name}}</div>
+        <div>Liste des albums de {{currentuser.name}}
+        </div>
         <ul>
-        <li v-for="album of albumlist">
-            {{album.title}} 
-            <span @click="showPictures(album.id, album.title)" class="suppr">
-            <strong>Voir les photos</strong>
-            </span>
-        </li>
-        
+            <li v-for="album of albumlist">
+             {{album.title}} 
+                <span @click="showPictures(album.id, album.title)" class="suppr">
+                <strong>Voir les photos</strong>
+                </span>
+            </li>
         </ul>
-        <p v-if="photos.length >  0">Photos de l'album "{{albumTitle}}"</p>
-        <div class="flex">
-            <figure v-for="photo in photos" class="image">
+        <p v-if="photos.length >  0" style="textAlign:center"> <strong>Photos de l'album "{{albumTitle}}"</strong>
+        </p>
+        <transition-group name="appear-up" class="flex" tag="div">
+            <figure v-for="photo in photos" class="image" v-bind:key="photo.id">
                 <a :href="photo.url" target="_blank"><img :src="photo.thumbnailUrl" :title="photo.title" alt="image"/></a>
                 <figcaption>{{photo.title}}</figcaption>
             </figure>
-        </div>
+        </transition-group>
     </section>
     </transition>
     `,
@@ -191,36 +195,39 @@ let albumlist = {
 
 let postlist = {
     template: `
-    <transition name="slide-fade">
-    <section v-if="article" class="posts" id="data-posts">
-        <div>Liste des articles de {{currentuser.name}}</div>
+    <transition name="appear-up">
+        <section v-if="article" class="posts" id="data-posts">
+            <div>
+                <h2>Liste des articles de {{currentuser.name}}</h2
+                <ul>
+                    <li title="Lire l'article" v-for="post of postlist" @click="showSinglePost(post.id)">{{post.title}}
+                    </li>
+                </ul>
+            </div>
 
-        <ul>
-            <li title="Lire l'article" v-for="post of postlist" @click="showSinglePost(post.id)">{{post.title}}
-            </li>
-        </ul>
-
-        <article v-if="post.body">
-            <h3>Article : {{post.title}}</h3>
-            <p>{{post.body}}</p>
-        </article>
-
-        <div v-if="comments">
-            <figure v-for="comment of comments" class="comment">
-                <blockquote>
-                    <p>"{{comment.body}}"</p>
-                    <figcaption>{{comment.name}}
-                        <cite>{{comment.email}}</cite>
-                    </figcaption>
-                </blockquote>
-            </figure>
-        </div>
-    </section>
+            <transition name="appear-up">
+                <article v-if="post.body">
+                    <h3 style="textAlign:center">Article : {{post.title}}</h3>
+                        <p>{{post.body}}</p>
+                </article>
+            </transition>
+            <transition-group v-if="comments" name="appear-up" class="comment" tag="div">
+                <figure v-for="comment of comments" v-bind:key="comment.id">
+                    <blockquote>
+                        <p>"{{comment.body}}"</p>
+                        <figcaption>{{comment.name}}
+                            <cite>{{comment.email}}</cite>
+                        </figcaption>
+                    </blockquote>
+                </figure>
+            </transition-group>
+        </section>
     </transition>
+
     `,
     props: ['article', 'postlist', 'post', 'currentuser', 'comments'],
     methods: {
-        // envoi de la requete de'affichage d'un article
+        // envoi de la requete d'affichage d'un article
         showSinglePost: function (postId) {
             this.$emit('show-post', postId);
         },
@@ -332,4 +339,3 @@ let vm = new Vue({
         postlist,
     }
 });
-
